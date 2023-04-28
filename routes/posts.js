@@ -27,7 +27,7 @@ const post = {
 
 // 전체 게시글 목록 조회 API
 router.get("/posts", async (req, res) => {
-    const posts = await Post.find({"postId" })
+    const posts = await Post.find({ })
     // 날짜 내림차순으로 정렬
     const result = posts.sort((a, b) => a.createdAt - b.createdAt).reverse();
 

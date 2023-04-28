@@ -26,12 +26,10 @@ const post = {
 }
 
 // 전체 게시글 목록 조회 API
-router.get("/posts", (req, res) => {
-
+router.get("/posts", async (req, res) => {
+    const posts = await Post.find({"postId" })
     // 날짜 내림차순으로 정렬
-    const result = posts.sort((a, b) => {
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    }).reverse();
+    const result = posts.sort((a, b) => a.createdAt - b.createdAt).reverse();
 
     res.json({ result });
 })

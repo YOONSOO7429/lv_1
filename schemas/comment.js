@@ -3,10 +3,17 @@ const mongoose = require("mongoose");
 const commentSchema = new mongoose.Schema({
     commentId: {
         type: String,
+        required: true,
         unique: true
+    },
+    postId: {
+        type: String,
+        required: true,
+        unique: true,
     },
     user: {
         type: String,
+        required: true,
     },
     content: {
         type: String,
@@ -16,6 +23,7 @@ const commentSchema = new mongoose.Schema({
     },
     password: {
         type: String,
+        required: true,
     },
 
 })

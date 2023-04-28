@@ -7,6 +7,7 @@ const commentsRouter = require("./routes/comments")
 const connect = require("./schemas")
 connect()
 
+// 미들웨어 express 설정
 app.use(express.json());
 app.use("/api",[postsRouter],[commentsRouter])
 

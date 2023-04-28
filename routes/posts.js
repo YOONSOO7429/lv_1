@@ -2,70 +2,60 @@ const express = require("express");
 const Post = require("../schemas/post.js");
 const router = express.Router();
 
-const posts = [
-    {
-        postId: "62d6d12cd88cadd496a9e54e",
-        user: "Developer",
-        title: "안녕하세요",
-        createdAt: "2022-07-19T15:43:40.266Z"
-    },
-    {
-        postId: "62d6cc66e28b7aff02e82954",
-        user: "Developer",
-        title: "안녕하세요",
-        createdAt: "2022-07-19T15:23:18.433Z"
-    }
-]
-
-const post = {
-    postId: "62d6cb83bb5a517ef2eb83cb",
-    user: "Developer",
-    title: "안녕하세요",
-    content: "안녕하세요 content 입니다.",
-    createdAt: "2022-07-19T15:19:31.730Z"
-}
 
 // 전체 게시글 목록 조회 API
 router.get("/posts", async (req, res) => {
-    const posts = await Post.find({ })
+    // 제목, 작성자명, 작성 날짜 조회
+    const posts = await Post.find({}).select("postId user title createdAt")
     // 날짜 내림차순으로 정렬
     const result = posts.sort((a, b) => a.createdAt - b.createdAt).reverse();
 
-    res.json({ result });
+    res.json({ data: result });
 })
 
 // 게시글 작성 API
 router.post("/posts", async (req, res) => {
     const { user, password, title, content } = req.body;
-
-    if (user == "" || password == "" || title == "" || content == "") {
+    // 데이터가 하나라도 없는 경우
+    if (!(user && password && title && content)) {
         return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
     }
     await Post.create({ user, password, title, content })
 
     res.json({ message: "게시글을 생성하였습니다." })
-})
+});
 
 // 게시글 조회 API
 router.get("/posts/:_postId", async (req, res) => {
-    if(post == {}) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다."})
+    // 제목, 작성자명, 작성 날짜, 작성 내용을 조회하기
+    // params로 받아오기
+    const { _postId } = req.params;
+    const post = await Post.find({ _postId });
+    // post 존재 여부
+    if (post.length) {
+        res.json({ post: post })
+    } else {
+        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
     }
-
-    res.json({post: post})
-})
+});
 
 // 게시글 수정 API
 router.put("/posts/:_postId", async (req, res) => {
+    // params로 받아오기
+    const { _postId } = req.params;
+    // 
+    const amho = Post.find({ _postId }).select("password")
+    // 입력 받은 값들 body로
     const { password, title, content } = req.body;
 
-    if (password == "" || title == "" || content == "") {
+    // 입력받은 값이 하나라도 없을 경우
+    if (!(password && title && content)) {
         res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
         return
     }
 
-    const existsPost = await Post.find({ password: password});
-    if (existsPost.length) {
+    // 암호에 따라 수정 여부
+    if (amho === password) {
         await Post.updateOne({ $set: { content } })
     } else {
         return res.status(404).json({ message: "게시글 조회에 실패하였습니다." })
@@ -75,15 +65,18 @@ router.put("/posts/:_postId", async (req, res) => {
 
 // 게시글 삭제 API
 router.delete("/posts/:_postId", async (req, res) => {
+    const { _postId } = req.params;
+    const amho = Post.find({ _postId }).select("password")
     const { password } = req.body;
 
-    if (password =="") {
-        res.status(400).json({message: "데이터 형식이 올바르지 않습니다."})
+    // 입력이 없을 경우
+    if (!password) {
+        res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
     }
 
-    const existsPost = await Post.find({ password: password })
-    if (existsPost.length) {
-        await Post.deleteOne({ existsPost: existsPost });
+    // 암호에 따라 게시글 삭제 여부
+    if (amho === password) {
+        await Post.deleteOne({ _postId });  // 암호가 맞다면 _postId에 해당하는 글 삭제
     } else {
         return res.status(404).json({ message: "게시글 조회에 실패하였습니다." })
     }

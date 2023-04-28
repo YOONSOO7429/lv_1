@@ -1,6 +1,6 @@
 const express = require("express");
 const Post = require("../schemas/post.js");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 const router = express.Router();
 
 
@@ -16,7 +16,9 @@ router.get("/posts", async (req, res) => {
 
 // 게시글 작성 API
 router.post("/posts", async (req, res) => {
+    // ObjectId로 postId로 Id부여하기
     const postId = new mongoose.Types.ObjectId();
+    // body로 작성내용 받기
     const { user, password, title, content } = req.body;
     // 데이터가 하나라도 없는 경우
     if (!(user && password && title && content)) {
@@ -58,17 +60,21 @@ router.put("/posts/:_postId", async (req, res) => {
 
     // 암호에 따라 수정 여부
     if (amho === password) {
-        await Post.updateOne({ $set: { content } })
+        await Post.updateOne({ $set: { content } })     // 일치할 경우 content 수정
+        return res.json({ message: "게시글을 수정하였습니다." })
     } else {
         return res.status(404).json({ message: "게시글 조회에 실패하였습니다." })
     }
-    res.json({ message: "게시글을 수정하였습니다." })
+
 })
 
 // 게시글 삭제 API
 router.delete("/posts/:_postId", async (req, res) => {
+    // params로 받아오기
     const { _postId } = req.params;
+    // amho로 기존에 password 받아오기
     const amho = Post.findOne({ postId: _postId }, {_id: 0, password: 1})
+    // 입력 받은 값들 body로
     const { password } = req.body;
 
     // 입력이 없을 경우
@@ -79,11 +85,11 @@ router.delete("/posts/:_postId", async (req, res) => {
     // 암호에 따라 게시글 삭제 여부
     if (amho === password) {
         await Post.deleteOne({ _postId });  // 암호가 맞다면 _postId에 해당하는 글 삭제
+        return res.json({ message: "게시글을 삭제하였습니다." })
     } else {
         return res.status(404).json({ message: "게시글 조회에 실패하였습니다." })
     }
 
-    res.json({ message: "게시글을 삭제하였습니다." })
 })
 
 module.exports = router;

@@ -30,7 +30,7 @@ router.post("/posts/:_postId/comments", async (req, res) => {
     }
 
     // 댓글 생성하기
-    await Comment.create({ user, password, content, commentId, postsId: _postId, createdAt: new Date() })
+    await Comment.create({ user, password, content, commentId, postId: _postId, createdAt: new Date() })
 
     res.json({ message: "게시글을 생성하였습니다." })
 })
@@ -42,40 +42,39 @@ router.put("/posts/:_postId/comments/:_commentId", async (req, res) => {
     // 수정 내용 body로 받기
     const { password, content } = req.body;
     // amho로 기존에 password 받아오기
-    const amho = Comment.find({ commentId: _commentId }, { _id: 0, password: 1 })
-    // commentId에 일치하는 comment 가져오기
-    const comment = await Comment.find({ commentId: _commentId });
+    const amho = await Comment.findOne({ commentId: _commentId }, { _id: 0, __v: 0 })
 
     // 댓글 내용이 없을 경우, 일치하는 댓글이 없을 경우
-    if (!comment) {
+    if (!amho) {
         return res.status(404).json({ message: "댓글 조회에 실패하였습니다." })
     } else if (!content) {
         return res.status(400).json({ message: "댓글 내용을 입력해주세요." })
+    } else if (!password) {
+        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
     }
 
     // 암호가 password와 일치 여부
-    if (amho === password) {
-        await Comment.updateOne({ $set: { content } })
+    if (amho.password === password) {
+        await Comment.updateOne({ commentId: _commentId }, { $set: { content } })
         return res.json({ message: "댓글을 수정하였습니다." })
     } else {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
+        return res.status(400).json({ message: "비밀번호를 다시 입력해주세요." })
     }
 
 })
 
 // 댓글 삭제
-router.delete("/posts/:_postId/comments/:_commetId", async (req, res) => {
+router.delete("/posts/:_postId/comments/:_commentId", async (req, res) => {
     // commentId를 params로 받기
     const { _commentId } = req.params
     // 입력 값 body로 받기
     const { password } = req.body;
     // amho로 기존에 password 받아오기
-    const amho = Comment.find({ commentId: _commentId }, { _id: 0, password: 1 })
-    // commentId에 일치하는 comment 가져오기
-    const comment = await Comment.find({ commentId: _commentId });
+    const amho = await Comment.findOne({ commentId: _commentId }, { _id: 0, __v: 0 })
+
 
     // commentId로 댓글 조회
-    if (!comment) {
+    if (!amho) {
         return res.status(404).json({ message: "댓글 조회에 실패하였습니다." })
     }
 
@@ -85,10 +84,11 @@ router.delete("/posts/:_postId/comments/:_commetId", async (req, res) => {
     }
 
     // 암호가 password와 일치 여부
-    if(amho === password) {
+    if (amho.password == password) {
+        await Comment.deleteOne({ commentId: _commentId });
         return res.json({ message: "댓글을 삭제하였습니다." });
     } else {
-        return res.status(400).json({ message: "비밀번호가 틀렸습니다."})
+        return res.status(400).json({ message: "비밀번호를 다시 입력해주세요." })
     }
 
 })

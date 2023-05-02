@@ -1,15 +1,21 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const app = express();
 const port = 3000;
 
-const postsRouter = require("./routes/posts")
-const commentsRouter = require("./routes/comments")
-const connect = require("./schemas")
-connect()
+const postsRouter = require("./routes/posts");
+const commentsRouter = require("./routes/comments");
+const usersRouter = require("./routes/users");
+const authRouter = require("./routes/auth");
+
+const connect = require("./schemas");
+connect();
 
 // 미들웨어 express 설정
 app.use(express.json());
-app.use("/api",[postsRouter],[commentsRouter])
+app.use(express.urlencoded({extended: false}));
+app.use(cookieParser());
+app.use("/api",[postsRouter, commentsRouter, usersRouter, authRouter]);
 
 
 

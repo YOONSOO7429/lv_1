@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 //      @ 작성 날짜 기준으로 내림차순 정렬하기
 router.get("/posts", async (req, res) => {
     try {
-        const posts = await Post.find({}, { _id: 0 }).sort({ createdAt: -1 });
+        const posts = await Post.find({}, { _id: false, content: false}).sort({ createdAt: -1 });
 
         res.json({ posts });
     }
@@ -38,7 +38,7 @@ router.post("/posts", async (req, res) => {
         } else if (title && !content) {
             return res.status(412).json({ errorMessage: "게시글 내용의 형식이 일치하지 않습니다." })
         }
-        await Post.create({ userId, postId, title, content, createdAt: new Date() });
+        await Post.create({ userId, postId, nickname, title, content, createdAt: new Date(), updatedAt: new Date() });
         return res.status(201).json({ message: "게시글 작성에 성공하였습니다." });
     }
     catch {
@@ -83,7 +83,7 @@ router.put("/posts/:_postId", authMiddleware, async (req, res) => {
         } else if (title && !content) {
             return res.status(412).json({ errorMessage: "게시글 내용의 형식이 일치하지 않습니다." });
         } else {
-            await Post.updateOne({postId: _postId}, {$set: {content, title}})
+            await Post.updateOne({postId: _postId}, {$set: {title, content, updatedAt: new Date()}})
             res.status(200).json({message: "게시글을 수정하였습니다."})
         }
     }

@@ -13,7 +13,7 @@ router.post("/login", async (req, res) => {
     // 닉네임과 비밀번호가 DB에 등록됐는지 확인한 뒤, 하나라도 맞지 않는
     // 정보가 있다면 에러 메시지 respose하기
     try {
-        if (user.password !== password || user.nickname !== nickname) {
+        if (!user || user.password !== password) {
             return res.status(412).json({ errorMessage: "닉네임 또는 패스워드를 확인해주세요." })
         }
     } catch (error) {
@@ -21,9 +21,9 @@ router.post("/login", async (req, res) => {
     }
 
     // JWT 생성
-    const token = jwt.sign({userId: user.userId}, "customized-secret-key")
+    const token = jwt.sign({ userId: user.userId }, "customized-secret-key")
 
     res.cookie("Authorization", `Bearer ${token}`);
-    res.status(200).json({token})
+    res.status(200).json({ token })
 
 })

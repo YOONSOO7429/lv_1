@@ -6,7 +6,7 @@ const postSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    user: {
+    nickname: {
         type: String,
         required: true,
     },

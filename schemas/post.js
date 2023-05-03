@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 const postSchema = new mongoose.Schema({
+    userId: {
+        type: String,
+        required: true,
+    },
     postId: {
         type: String,
         required: true,
@@ -9,6 +13,7 @@ const postSchema = new mongoose.Schema({
     nickname: {
         type: String,
         required: true,
+        unique: true,
     },
     title: {
         type: String,

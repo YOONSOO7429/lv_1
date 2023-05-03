@@ -10,10 +10,12 @@ module.exports = async (req, res, next) => {
 
     //authType === Bearer값인지 확인
     //authToken 검증
-    if (authType !== "Bearer" || !authToken) {
-        res.status(400).json({
-            errorMessage: "로그인 후에 이용할 수 있는 기능입니다."
-        })
+    if (!authToken) {
+        res.status(403).json({ errorMessage: "로그인이 필요한 기능입니다." })
+        return;
+    }
+    if (authType !== "Bearer") {
+        res.status(403).json({ errorMessage: "전달된 쿠키에서 오류가 발생하였습니다." })
         return;
     }
 
@@ -33,7 +35,7 @@ module.exports = async (req, res, next) => {
         next();
     } catch (error) {
         console.error(error);
-        res.status(400).json({ errorMessage: "로그인 후에 이용할 수 있는 기능입니다." });
+        res.status(400).json({ errorMessage: "로그인이 필요한 기능입니다." });
         return;
     }
 

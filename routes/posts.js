@@ -1,94 +1,120 @@
 const express = require("express");
-const Post = require("../schemas/post.js");
-const mongoose = require("mongoose");
 const router = express.Router();
+const Post = require("../schemas/post.js");
+const authMiddleware = require("../middlewares/auth-middleware.js");
+const mongoose = require("mongoose");
 
 
-// 전체 게시글 목록 조회 API
+// 1. 전체 게시글 목록 조회 API
+//      @ 제목, 작성자명(nickname), 작성 날짜를 조회하기
+//      @ 작성 날짜 기준으로 내림차순 정렬하기
 router.get("/posts", async (req, res) => {
-    // 제목, 작성자명, 작성 날짜 조회
-    const posts = await Post.find({}, { _id: 0, postId: 1, user: 1, title: 1, createdAt: 1 })
-    // 날짜 내림차순으로 정렬
-    const result = posts.sort((a, b) => a.createdAt - b.createdAt).reverse();
+    try {
+        const posts = await Post.find({}, { _id: 0 }).sort({ createdAt: -1 });
 
-    res.json({ data: result });
+        res.json({ data: posts });
+    }
+    // 예외 케이스에서 처리하지 못한 에러
+    catch (error) {
+        return res.status(400).json({ errorMessage: "게시글 조회에 실패하였습니다." })
+    }
 })
 
-// 게시글 작성 API
+// 2. 게시글 작성 API
+//      @ 토큰을 검사하여, 유효한 토큰일 경우에만 게시글 작성 가능
+//      @ 제목, 작성 내용을 입력하기
 router.post("/posts", async (req, res) => {
+    const { userId } = res.locals.user
     // ObjectId로 postId로 Id부여하기
     const postId = new mongoose.Types.ObjectId();
     // body로 작성내용 받기
-    const { user, password, title, content } = req.body;
+    const { title, content } = req.body;
     // 데이터가 하나라도 없는 경우
-    if (!(user && password && title && content)) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
+    try {
+        if (!(title && content)) {
+            return res.status(412).json({ errorMessage: "데이터 형식이 올바르지 않습니다." })
+        } else if (!title && content) {
+            return res.status(412).json({ errorMessage: "게시글 제목의 형식이 일치하지 않습니다." })
+        } else if (title && !content) {
+            return res.status(412).json({ errorMessage: "게시글 내용의 형식이 일치하지 않습니다." })
+        }
+        await Post.create({ userId, postId, title, content, createdAt: new Date() });
+        return res.status(201).json({ message: "게시글 작성에 성공하였습니다." });
     }
-    await Post.create({ postId, user, password, title, content, createdAt: new Date() })
-
-    res.json({ message: "게시글을 생성하였습니다." })
+    catch {
+        return res.status(400).json({ errorMessage: "게시글 작성에 실패하였습니다." })
+    }
 });
 
-// 게시글 조회 API
+// 3. 게시글 조회 API
+//      @제목, 작성자명(nickname), 작성 날짜, 작성 내용을 조회하기
 router.get("/posts/:_postId", async (req, res) => {
-    // 제목, 작성자명, 작성 날짜, 작성 내용을 조회하기
     // params로 받아오기
     const { _postId } = req.params;
-    const post = await Post.findOne({ postId: _postId }, { _id: 0, __v: 0, password: 0 });
-    // post 존재 여부
-    if (!post) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
-    } else {
-        res.json({ "data": post })
+    try {
+        const post = await Post.findOne({ postId: _postId }, { _id: 0, __v: 0, password: 0 });
+        return res.status(200).json({ post: post })
+    }
+    // 예외 케이스에서 처리하지 못한 에러
+    catch {
+        return res.status(400).json({ errorMessage: "게시글 조회에 실패하였습니다." })
     }
 });
 
-// 게시글 수정 API
-router.put("/posts/:_postId", async (req, res) => {
+// 4. 게시글 수정 API
+//      @토큰을 검사하여, 해당 사용자가 작성한 게시글만 수정 가능
+router.put("/posts/:_postId", authMiddleware, async (req, res) => {
+    const { userId } = res.locals.user
     // params로 받아오기
     const { _postId } = req.params;
-    // amho로 기존에 password 받아오기
-    const amho = await Post.findOne({ postId: _postId }, { _id: 0, __v:0 })
+    // post 조회하기
+    const post = await Post.findOne({ postId: _postId }, { _id: 0, __v: 0 })
     // 입력 받은 값들 body로
-    const { password, title, content } = req.body;
-    
+    const { title, content } = req.body;
 
-
-    // 입력받은 값이 하나라도 없을 경우
-    if (!(password && title && content)) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
+    try {
+        if (userId !== post.userId) {
+            return res.status(403).json({ errorMessage: "게시글 수정의 권한이 존재하지 않습니다." });
+        }
+        if (!(title && content)) {
+            return res.status(412).json({ errorMessage: "데이터 형식이 올바르지 않습니다." });
+        } else if (!title && content) {
+            return res.status(412).json({ errorMessage: "게시글 제목의 형식이 일치하지 않습니다." });
+        } else if (title && !content) {
+            return res.status(412).json({ errorMessage: "게시글 내용의 형식이 일치하지 않습니다." });
+        } else {
+            await Post.updateOne({postId: _postId}, {$set: {content, title}})
+            res.status(200).json({message: "게시글을 수정하였습니다."})
+        }
     }
-
-    // 암호에 따라 수정 여부
-    if (amho.password == password) {
-        await Post.updateOne({ postId: _postId }, { $set: { content } })     // 일치할 경우 content 수정
-        return res.json({ message: "게시글을 수정하였습니다." })
-    } else {
-        return res.status(404).json({ message: "게시글 조회에 실패하였습니다." })
-    }
-
-})
+    // 예외 케이스에서 처리하지 못한 에러
+    catch (error) {
+        return res.status(400).json({ errorMessage: "게시글 수정에 실패하였습니다." });
+    };
+});
 
 // 게시글 삭제 API
-router.delete("/posts/:_postId", async (req, res) => {
+router.delete("/posts/:_postId", authMiddleware, async (req, res) => {
+    const { userId } = res.locals.user
     // params로 받아오기
     const { _postId } = req.params;
-    // amho로 기존에 password 받아오기
-    const amho = await Post.findOne({ postId: _postId }, { _id: 0, __v:0 })
-    // 입력 받은 값들 body로
-    const { password } = req.body;
+    // post 조회하기
+    const post = await Post.findOne({ postId: _postId }, { _id: 0, __v: 0 })
 
-    // 입력이 없을 경우
-    if (!password) {
-        res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
+    try {
+        if(!post) {
+            return res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." })
+        }
+        if(userId !== post.userId) {
+            return res.status(403).json({ errorMessage: "게시글의 삭제 권한이 존재하지 않습니다." })
+        } else {
+            await Post.deleteOne({ postId: _postId })
+            res.status(200).json({ message: "게시글을 삭제하였습니다."})
+        }
     }
-
-    // 암호에 따라 게시글 삭제 여부
-    if (amho.password == password) {
-        await Post.deleteOne({ postId: _postId });  // 암호가 맞다면 _postId에 해당하는 글 삭제
-        return res.json({ message: "게시글을 삭제하였습니다." })
-    } else {
-        return res.status(404).json({ message: "게시글 조회에 실패하였습니다." })
+    // 예외 케이스에서 처리하지 못한 에러
+    catch (error) {
+        return res.status(400).json({ errorMessage: "게시글이 정상적으로 삭제되지 않았습니다." })
     }
 
 })

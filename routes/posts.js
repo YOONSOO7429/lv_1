@@ -12,7 +12,7 @@ router.get("/posts", async (req, res) => {
     try {
         const posts = await Post.find({}, { _id: 0 }).sort({ createdAt: -1 });
 
-        res.json({ data: posts });
+        res.json({ posts });
     }
     // 예외 케이스에서 처리하지 못한 에러
     catch (error) {

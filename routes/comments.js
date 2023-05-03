@@ -1,96 +1,150 @@
 const express = require("express");
 const Comment = require("../schemas/comment.js");
-const mongoose = require("mongoose");
+const Post = require("../schemas/post.js")
 const router = express.Router();
+const authMiddleware = require("../middlewares/auth-middleware.js")
+const mongoose = require("mongoose");
 
-// 댓글 목록 조회
-router.get("/posts/:_postId/comments", async (req, res) => {
-    // commentId, user, content, createdAt 조회
-    const comments = await Comment.find({}, { _id: 0, commentId: 1, user: 1, content: 1, createdAt: 1 })
-    // 날짜 내림차순으로 정렬
-    const result = comments.sort((a, b) => a.createdAt - b.createdAt).reverse();
+// 6. 댓글 목록 조회
+router.get("/posts/:postId/comments", async (req, res) => {
+    // 게시글 조회
+    const { postId } = req.params
+    const post = await Post.findOne({ postId: postId })
 
-    res.json({ data: result });
+    // commentId, user, content, createdAt 조회, 날짜 내림차순으로 정렬
+    const comments = await Comment.find({}, { _id: false, password: false }).sort({ createdAt: -1 })
+
+    if (!post) {
+        return res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." })
+    }
+
+    // comments 조회
+    try {
+        return res.status(200).json({ comments });
+    }
+    // 예외 케이스에서 처리하지 못한 에러
+    catch (error) {
+        return res.status(400).json({ errorMessage: "댓글 조회에 실패하였습니다." })
+    }
 })
 
-// 댓글 작성
-router.post("/posts/:_postId/comments", async (req, res) => {
-    // _postId를 params로 받아오기
-    const { _postId } = req.params;
+// 7. 댓글 작성
+//      @로그인 토큰을 검사하여, 유효한 토큰일 경우에만 댓글 작성 가능
+//      @댓글 내용을 배워둔 채 댓글 작성 API를 호출하면 "댓글 작성 가능"
+//      @댓글 내용을 입력하고 댓글 작성 API를 호출한 경우 작성한 댓글을 추가하기
+router.post("/posts/:postId/comments", authMiddleware, async (req, res) => {
+    const { userId } = res.locals.user;
+    // postId를 params로 받아오기
+    const { postId } = req.params;
     // 작성한 댓글 body로 받기
-    const { user, password, content } = req.body;
+    const { comment } = req.body;
     // commentId 부여하기
     const commentId = new mongoose.Types.ObjectId();
 
-    // 입력이 없으면 메세지 띄워주기
-    if (!(user && password)) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
-    } else if (!content) {
-        return res.status(400).json({ message: "댓글 내용을 입력해주세요." })
+    // 게시글 조회
+    const post = await Post.findOne({ postId: postId })
+
+    if (!post) {
+        return res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." })
+    }
+    // 댓글 형식
+    if (!comment) {
+        return res.status(412).json({ errorMessage: "데이터 형식이 올바르지 않습니다." })
     }
 
-    // 댓글 생성하기
-    await Comment.create({ user, password, content, commentId, postId: _postId, createdAt: new Date() })
+    try {
+        // 댓글 생성
+        await Comment.create({ nickname, comment, commentId, userId, createdAt: new Date(), updatedAt: new Date() })
+        return res.status(201).json({ message: "게시글을 생성하였습니다." })
+    }
+    // 예외 케이스에서 처리하지 못한 에러
+    catch (error) {
+        return res.status(400).json({ errorMessage: "댓글 작성에 실패하였습니다." })
+    };
 
-    res.json({ message: "게시글을 생성하였습니다." })
 })
 
-// 댓글 수정
-router.put("/posts/:_postId/comments/:_commentId", async (req, res) => {
-    // _commentId 받아오기
-    const { _commentId } = req.params
+// 8. 댓글 수정
+//      @로그인 토큰을 검사하여, 해당 사용자가 작성한 댓글만 수정 가능
+//      @댓글 내용을 비워둔 채 댓글 수정 API를 호출하면 "댓글 내용을 입력해주세요"라는 메세지를 return하기
+//      @댓글 내용을 입력하고 댓글 수정 API를 호출한 경우 작성한 댓글을 수정하기
+router.put("/posts/:postId/comments/:commentId", authMiddleware, async (req, res) => {
+    // postId, commentId, userId 받아오기
+    const { postId, commentId } = req.params;
+    const { userId } = res.locals.user
+
+    // 게시글 조회
+    const post = await Post.findOne({ postId: postId });
+    if (!post) {
+        return res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." })
+    };
+
+    // 댓글 조회
+    const findComment = await Comment.findOne({ commentId: commentId })
+    if (!findComment) {
+        return res.status(404).json({ errorMessage: "댓글이 존재하지 않습니다." })
+    };
+    if (!findComment.comment) {
+        return res.status(412).json({ errorMessage: "댓글 내용을 입력해주세요." })
+    };
+
+    // 댓글 수정 권한
+    if (findComment.userId !== userId) {
+        return res.status(403).json({ errorMessage: "댓글의 수정 권한이 존재하지 않습니다." })
+    }
+
     // 수정 내용 body로 받기
-    const { password, content } = req.body;
-    // amho로 기존에 password 받아오기
-    const amho = await Comment.findOne({ commentId: _commentId }, { _id: 0, __v: 0 })
+    const { comment } = req.body;
 
-    // 댓글 내용이 없을 경우, 일치하는 댓글이 없을 경우
-    if (!amho) {
-        return res.status(404).json({ message: "댓글 조회에 실패하였습니다." })
-    } else if (!content) {
-        return res.status(400).json({ message: "댓글 내용을 입력해주세요." })
-    } else if (!password) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
-    }
+    // 댓글 형식
+    if (!comment) {
+        return res.status(412).json({ errorMessage: "데이터 형식이 올바르지 않습니다." })
+    };
 
-    // 암호가 password와 일치 여부
-    if (amho.password === password) {
-        await Comment.updateOne({ commentId: _commentId }, { $set: { content } })
-        return res.json({ message: "댓글을 수정하였습니다." })
-    } else {
-        return res.status(400).json({ message: "비밀번호를 다시 입력해주세요." })
+    try {
+        await Comment.updateOne({ commentId: commentId }, { $set: { comment } })
+        return res.status(200).json({ message: "댓글을 수정하였습니다." })
     }
+    // 예외케이스에서 처리하지 못한 에러
+    catch (error) {
+        return res.status(400).json({ errorMessage: "댓글 수정에 실패하였습니다." })
+    };
 
 })
 
-// 댓글 삭제
-router.delete("/posts/:_postId/comments/:_commentId", async (req, res) => {
+// 9. 댓글 삭제
+//      @로그인 토큰을 검사하여, 해당 사용자가 작성한 댓글만 삭제 가능
+//      @원하는 댓글을 삭제하기
+router.delete("/posts/:postId/comments/:commentId", authMiddleware, async (req, res) => {
     // commentId를 params로 받기
-    const { _commentId } = req.params
-    // 입력 값 body로 받기
-    const { password } = req.body;
-    // amho로 기존에 password 받아오기
-    const amho = await Comment.findOne({ commentId: _commentId }, { _id: 0, __v: 0 })
+    const { postId, commentId } = req.params
 
-
-    // commentId로 댓글 조회
-    if (!amho) {
-        return res.status(404).json({ message: "댓글 조회에 실패하였습니다." })
+    // 게시글 조회
+    const post = await Post.findOne({ postId: postId });
+    if (!post) {
+        return res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." });
     }
 
-    // password를 입력 안했을 경우
-    if (!password) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." })
-    }
+    // 댓글 조회
+    const findComment = await Comment.findOne({ commentId: commentId })
+    if (!findComment) {
+        return res.status(404).json({ errorMessage: "댓글이 존재하지 않습니다." });
+    };
 
-    // 암호가 password와 일치 여부
-    if (amho.password == password) {
-        await Comment.deleteOne({ commentId: _commentId });
-        return res.json({ message: "댓글을 삭제하였습니다." });
-    } else {
-        return res.status(400).json({ message: "비밀번호를 다시 입력해주세요." })
-    }
+    // 댓글 삭제 권한
+    if (findComment.userId !== userId) {
+        return res.status(401).json({ errorMessage: "댓글의 삭제 권한이 존재하지 않습니다." })
+    };
 
+    try {
+        await Comment.deleteOne({ commentId: commentId })
+        return res.status(200).json({ message: "댓글을 삭제하였습니다." });
+    }
+    // 예외 케이스에서 처리하지 못한 에러
+    catch (error) {
+        return res.status(400).json({ errorMessage: "댓글 삭제에 실패하였습니다." });
+    };
+    
 })
 
 

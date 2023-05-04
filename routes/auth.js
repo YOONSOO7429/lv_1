@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const User = requrie("../schemas/user");
+const User = require("../schemas/user");
 const jwt = require("jsonwebtoken");
 
 // 로그인 API
@@ -27,3 +27,5 @@ router.post("/login", async (req, res) => {
     res.status(200).json({ token })
 
 })
+
+module.exports = router;

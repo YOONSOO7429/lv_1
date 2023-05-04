@@ -6,7 +6,7 @@ const postSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    userId: {
+    UserId: {
         type: String,
         required: true,
     },
@@ -18,20 +18,16 @@ const postSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    content: {
+        type: String,
+        required: true
+    },
     createdAt: {
         type: Date
     },
     updatedAt: {
         type: Date
     },
-    content: {
-        type: String,
-        required: true
-    },
-    password: {
-        type: String,
-        required: true,
-    }
 })
 
 module.exports = mongoose.model("Post", postSchema)

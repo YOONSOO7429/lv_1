@@ -6,7 +6,7 @@ const commentSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    userId: {
+    UserId: {
         type: String,
         required: true,
     },
@@ -22,10 +22,6 @@ const commentSchema = new mongoose.Schema({
     },
     updatedAt: {
         type: Date,
-    },
-    password: {
-        type: String,
-        required: true,
     },
 
 })

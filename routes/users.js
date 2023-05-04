@@ -44,3 +44,5 @@ router.post("/signup", async (req, res) => {
 
     res.status(201).json({message: "회원 가입에 성공했습니다."})
 })
+
+module.exports = router;

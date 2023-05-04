@@ -11,8 +11,8 @@ router.get("/posts/:postId/comments", async (req, res) => {
     const { postId } = req.params
     const post = await Post.findOne({ postId: postId })
 
-    // commentId, user, content, createdAt 조회, 날짜 내림차순으로 정렬
-    const comments = await Comment.find({}, { _id: false, password: false }).sort({ createdAt: -1 })
+    // commentId, userId, nickname, comment, createdAt 조회, 날짜 내림차순으로 정렬
+    const comments = await Comment.find({}, { _id: false, password: false, __v: false, }).sort({ createdAt: -1 })
 
     if (!post) {
         return res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." })
@@ -23,7 +23,7 @@ router.get("/posts/:postId/comments", async (req, res) => {
         return res.status(200).json({ comments });
     }
     // 예외 케이스에서 처리하지 못한 에러
-    catch (error) {
+    catch {
         return res.status(400).json({ errorMessage: "댓글 조회에 실패하였습니다." })
     }
 })
@@ -33,7 +33,7 @@ router.get("/posts/:postId/comments", async (req, res) => {
 //      @댓글 내용을 배워둔 채 댓글 작성 API를 호출하면 "댓글 작성 가능"
 //      @댓글 내용을 입력하고 댓글 작성 API를 호출한 경우 작성한 댓글을 추가하기
 router.post("/posts/:postId/comments", authMiddleware, async (req, res) => {
-    const { userId } = res.locals.user;
+    const { userId, nickname } = res.locals.user;
     // postId를 params로 받아오기
     const { postId } = req.params;
     // 작성한 댓글 body로 받기
@@ -54,11 +54,11 @@ router.post("/posts/:postId/comments", authMiddleware, async (req, res) => {
 
     try {
         // 댓글 생성
-        await Comment.create({ nickname, comment, commentId, userId, createdAt: new Date(), updatedAt: new Date() })
+        await Comment.create({ nickname: nickname, comment, commentId, UserId: userId, createdAt: new Date(), updatedAt: new Date() })
         return res.status(201).json({ message: "게시글을 생성하였습니다." })
     }
     // 예외 케이스에서 처리하지 못한 에러
-    catch (error) {
+    catch {
         return res.status(400).json({ errorMessage: "댓글 작성에 실패하였습니다." })
     };
 
@@ -89,7 +89,7 @@ router.put("/posts/:postId/comments/:commentId", authMiddleware, async (req, res
     };
 
     // 댓글 수정 권한
-    if (findComment.userId !== userId) {
+    if (findComment.UserId !== userId) {
         return res.status(403).json({ errorMessage: "댓글의 수정 권한이 존재하지 않습니다." })
     }
 
@@ -106,7 +106,7 @@ router.put("/posts/:postId/comments/:commentId", authMiddleware, async (req, res
         return res.status(200).json({ message: "댓글을 수정하였습니다." })
     }
     // 예외케이스에서 처리하지 못한 에러
-    catch (error) {
+    catch {
         return res.status(400).json({ errorMessage: "댓글 수정에 실패하였습니다." })
     };
 
@@ -118,6 +118,7 @@ router.put("/posts/:postId/comments/:commentId", authMiddleware, async (req, res
 router.delete("/posts/:postId/comments/:commentId", authMiddleware, async (req, res) => {
     // commentId를 params로 받기
     const { postId, commentId } = req.params
+    const { userId } = res.locals.user
 
     // 게시글 조회
     const post = await Post.findOne({ postId: postId });
@@ -132,7 +133,7 @@ router.delete("/posts/:postId/comments/:commentId", authMiddleware, async (req, 
     };
 
     // 댓글 삭제 권한
-    if (findComment.userId !== userId) {
+    if (findComment.UserId !== userId) {
         return res.status(401).json({ errorMessage: "댓글의 삭제 권한이 존재하지 않습니다." })
     };
 
@@ -141,7 +142,7 @@ router.delete("/posts/:postId/comments/:commentId", authMiddleware, async (req, 
         return res.status(200).json({ message: "댓글을 삭제하였습니다." });
     }
     // 예외 케이스에서 처리하지 못한 에러
-    catch (error) {
+    catch {
         return res.status(400).json({ errorMessage: "댓글 삭제에 실패하였습니다." });
     };
     

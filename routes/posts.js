@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Post = require("../schemas/post.js");
+const User = require("../schemas/user.js")
 const authMiddleware = require("../middlewares/auth-middleware.js");
 const mongoose = require("mongoose");
 
@@ -11,11 +12,11 @@ const mongoose = require("mongoose");
 router.get("/posts", async (req, res) => {
     try {
         // 게시글 전체 조회
-        const posts = await Post.find({}, { _id: false, content: false }).sort({ createdAt: -1 });
+        const posts = await Post.find({}, { _id: false, content: false, __v: false, }).sort({ createdAt: -1 });
         res.json({ posts });
     }
     // 예외 케이스에서 처리하지 못한 에러
-    catch (error) {
+    catch {
         return res.status(400).json({ errorMessage: "게시글 조회에 실패하였습니다." })
     }
 })
@@ -23,8 +24,8 @@ router.get("/posts", async (req, res) => {
 // 2. 게시글 작성 API
 //      @ 토큰을 검사하여, 유효한 토큰일 경우에만 게시글 작성 가능
 //      @ 제목, 작성 내용을 입력하기
-router.post("/posts", async (req, res) => {
-    const { userId } = res.locals.user
+router.post("/posts", authMiddleware, async (req, res) => {
+    const { userId, nickname } = res.locals.user
     // ObjectId로 postId로 Id부여하기
     const postId = new mongoose.Types.ObjectId();
     // body로 작성내용 받기
@@ -41,11 +42,11 @@ router.post("/posts", async (req, res) => {
 
     try {
         // 게시글 작성
-        await Post.create({ userId, postId, nickname, title, content, createdAt: new Date(), updatedAt: new Date() });
+        await Post.create({ UserId: userId, postId, nickname: nickname, title, content, createdAt: new Date(), updatedAt: new Date() });
         return res.status(201).json({ message: "게시글 작성에 성공하였습니다." });
     }
     // 예외 케이스에서 처리하지 못한 에러
-    catch (error) {
+    catch {
         return res.status(400).json({ errorMessage: "게시글 작성에 실패하였습니다." })
     }
 });
@@ -77,7 +78,7 @@ router.put("/posts/:postId", authMiddleware, async (req, res) => {
     const { title, content } = req.body;
 
     // error
-    if (userId !== post.userId) {
+    if (userId !== post.UserId) {
         return res.status(403).json({ errorMessage: "게시글 수정의 권한이 존재하지 않습니다." });
     }
     if (!(title && content)) {
@@ -110,7 +111,7 @@ router.delete("/posts/:postId", authMiddleware, async (req, res) => {
     if (!post) {
         return res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." })
     }
-    if (userId !== post.userId) {
+    if (userId !== post.UserId) {
         return res.status(403).json({ errorMessage: "게시글의 삭제 권한이 존재하지 않습니다." })
     }
 

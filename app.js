@@ -13,15 +13,9 @@ connect();
 
 // 미들웨어 express 설정
 app.use(express.json());
-app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
-app.use("/api",[postsRouter, commentsRouter, usersRouter, authRouter]);
+app.use("/",[postsRouter, commentsRouter, usersRouter, authRouter]);
 
-
-
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
 
 app.listen(port, () => {
     console.log(port, "포트로 서버가 열렸습니다!")

@@ -21,7 +21,7 @@ router.post("/login", async (req, res) => {
     }
 
     // JWT 생성
-    const token = jwt.sign({ userId: user.userId }, "customized-secret-key")
+    const token = jwt.sign({ userId: user.userId }, "customized_secret_key")
 
     res.cookie("Authorization", `Bearer ${token}`);
     res.status(200).json({ token })

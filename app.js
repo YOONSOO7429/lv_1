@@ -8,8 +8,6 @@ const commentsRouter = require("./routes/comments");
 const usersRouter = require("./routes/users");
 const authRouter = require("./routes/auth");
 
-const connect = require("./schemas");
-connect();
 
 // 미들웨어 express 설정
 app.use(express.json());

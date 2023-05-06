@@ -80,7 +80,7 @@ router.put("/posts/:postId", authMiddleware, async (req, res) => {
     const { title, content } = req.body;
 
     // error
-    if (userId !== post.UserId) {
+    if (userId !== post.userId) {
         return res.status(403).json({ errorMessage: "게시글 수정의 권한이 존재하지 않습니다." });
     }
     if (!(title && content)) {
@@ -119,7 +119,7 @@ router.delete("/posts/:postId", authMiddleware, async (req, res) => {
     if (!post) {
         return res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." })
     }
-    if (userId !== post.UserId) {
+    if (userId !== post.userId) {
         return res.status(403).json({ errorMessage: "게시글의 삭제 권한이 존재하지 않습니다." })
     }
 

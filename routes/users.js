@@ -29,7 +29,7 @@ router.post("/signup", async (req, res) => {
         }
 
         // 중복된 닉네임
-        const existsNickname = await User.findOne({ where: { nickname } })
+        const existsNickname = await Users.findOne({ where: { nickname } })
         if (existsNickname) {
             return res.status(412).json({ errorMessage: "중복된 닉네임입니다." })
         }

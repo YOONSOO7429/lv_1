@@ -31,7 +31,7 @@ router.post("/signup", async (req, res) => {
         // 중복된 닉네임
         const existsNickname = await User.findOne({ $or: [{ nickname }] })
         if (existsNickname) {
-            res.status(412).json({ errorMessage: "중복된 닉네임입니다." })
+            return res.status(412).json({ errorMessage: "중복된 닉네임입니다." })
         }
     }
     //400 예외 케이스에서 처리하지 못한 에러
@@ -42,7 +42,7 @@ router.post("/signup", async (req, res) => {
     const user = new User({nickname, password, confirm});
     await user.save();
 
-    res.status(201).json({message: "회원 가입에 성공했습니다."})
+    return res.status(201).json({message: "회원 가입에 성공했습니다."})
 })
 
 module.exports = router;

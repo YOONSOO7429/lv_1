@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../schemas/user");
+const { Users } = require("../models");
 const jwt = require("jsonwebtoken");
 
 // 로그인 API
@@ -8,7 +8,7 @@ router.post("/login", async (req, res) => {
     // nickname, password를 body로 받기
     const { nickname, password } = req.body;
     // nickname과 일치하는 유저를 찾는다.
-    const user = await User.findOne({ nickname });
+    const user = await Users.findOne({ where: { nickname } });
 
     // 닉네임과 비밀번호가 DB에 등록됐는지 확인한 뒤, 하나라도 맞지 않는
     // 정보가 있다면 에러 메시지 respose하기

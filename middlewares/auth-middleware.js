@@ -28,7 +28,7 @@ module.exports = async (req, res, next) => {
 
         next();
     } catch (error) {
-        return res.status(401).json({ errorMessage: "전달된 쿠키에서 오류가 발생하였습니다."
+        return res.status(403).json({ errorMessage: "비정상적인 요청입니다."
         });
     }
 }

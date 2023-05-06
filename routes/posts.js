@@ -42,7 +42,10 @@ router.get("/posts", async (req, res) => {
             attributes: ['postId', 'userId', 'title', 'createdAt', 'updatedAt'],
             order: [['createdAt', 'DESC']]
         });
-        res.json({ posts });
+        if(!posts) {
+            return res.status(400).json({ errorMessage: "조회할 게시글이 없습니다."})
+        }
+        return res.json({ posts });
     }
     // 예외 케이스에서 처리하지 못한 에러
     catch {
@@ -60,6 +63,9 @@ router.get("/posts/:postId", async (req, res) => {
             attributes: ['postId', 'userId', 'title', 'content', 'createdAt', 'updatedAt'],
             where: { postId }
         });
+        if(!post) {
+            return res.status(400).json({errorMessage: "조회한 게시글이 없습니다."})
+        }
         return res.status(200).json({ post })
     }
     // 예외 케이스에서 처리하지 못한 에러
@@ -80,6 +86,9 @@ router.put("/posts/:postId", authMiddleware, async (req, res) => {
     const { title, content } = req.body;
 
     // error
+    if(!post) {
+        return res.status(400).json({ errorMessage: "수정할 게시글이 존재하지 않습니다."})
+    }
     if (userId !== post.userId) {
         return res.status(403).json({ errorMessage: "게시글 수정의 권한이 존재하지 않습니다." });
     }

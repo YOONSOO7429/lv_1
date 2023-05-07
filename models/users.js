@@ -1,8 +1,6 @@
 'use strict';
 const { model } = require('mongoose');
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Users extends Model {
     /**
@@ -14,44 +12,47 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       this.hasMany(models.Posts, {
         sourceKey: 'userId',
-        foreignKey: 'userId'
+        foreignKey: 'userId',
       });
 
       this.hasMany(models.Comments, {
         sourceKey: 'userId',
         foreignKey: 'userId',
-      })
+      });
     }
   }
-  Users.init({
-    userId: {
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER
+  Users.init(
+    {
+      userId: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      nickname: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      createdAt: {
+        allowNull: false,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
     },
-    nickname: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
+    {
+      sequelize,
+      modelName: 'Users',
     },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    }
-  }, {
-    sequelize,
-    modelName: 'Users',
-  });
+  );
   return Users;
 };

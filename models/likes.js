@@ -1,55 +1,42 @@
 'use strict';
 const { model } = require('mongoose');
-const { Model } = require('sequelize');
+const {
+  Model
+} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Posts extends Model {
+  class Likes extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
       this.belongsTo(models.Users, {
         targetKey: 'userId',
         foreignKey: 'userId',
         onDelete: 'CASCADE',
       });
-
-      this.hasMany(models.Comments, {
-        sourceKey: 'postId',
+      this.belongsTo(models.Posts, {
+        targetKey: 'postId',
         foreignKey: 'postId',
-      });
-
-      this.hasMany(models.Likes, {
-        sourceKey: 'postId',
-        foreignKey: 'postId',
+        onDelete: 'CASCADE',
       })
     }
   }
-  Posts.init(
+  Likes.init(
     {
-      postId: {
+      likeId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: DataTypes.INTEGER,
       },
-      userId: {
-        allowNull: false,
+      postId: {
         type: DataTypes.INTEGER,
-        references: {
-          model: 'Users',
-          key: 'userId',
-        },
-        onDelete: 'CASCADE',
-      },
-      title: {
-        type: DataTypes.STRING,
         allowNull: false,
       },
-      content: {
-        type: DataTypes.STRING,
+      userId: {
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
       createdAt: {
@@ -62,11 +49,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
-    },
-    {
-      sequelize,
-      modelName: 'Posts',
-    },
-  );
-  return Posts;
+    }, {
+    sequelize,
+    modelName: 'Likes',
+  });
+  return Likes;
 };

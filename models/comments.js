@@ -9,14 +9,16 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      this.belongsTo(models.Posts, {
-        targetKey: 'postId',
-        foreignKey: 'postId',
-      });
-
       this.belongsTo(models.Users, {
         targetKey: 'userId',
         foreignKey: 'userId',
+        onDelete: 'CASCADE',
+      });
+
+      this.belongsTo(models.Posts, {
+        targetKey: 'postId',
+        foreignKey: 'postId',
+        onDelete: 'CASCADE',
       });
     }
   }

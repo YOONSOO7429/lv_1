@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Posts } = require('../models');
-const { Op } = require('sequelize');
+const { Posts, Likes, sequelize, Users } = require('../models');
 const authMiddleware = require('../middlewares/auth-middleware.js');
 
 // 1. 게시글 작성 API
@@ -46,8 +45,28 @@ router.get('/posts', async (req, res) => {
   try {
     // 게시글 전체 조회
     const posts = await Posts.findAll({
-      attributes: ['postId', 'userId', 'title', 'createdAt', 'updatedAt'],
+      attributes: [
+        'postId',
+        'userId',
+        'title',
+        'createdAt',
+        'updatedAt',
+        [sequelize.fn('COUNT', sequelize.col('Likes.postId')), 'likes'],
+      ],
+      include: [
+        {
+          model: Users,
+          attributes: [],
+        },
+        {
+          model: Likes,
+          attributes: [],
+          require: false,
+        },
+      ],
+      group: ['Posts.postId'],
       order: [['createdAt', 'DESC']],
+      raw: true,
     });
     if (!posts) {
       return res
@@ -77,8 +96,22 @@ router.get('/posts/:postId', async (req, res) => {
         'content',
         'createdAt',
         'updatedAt',
+        [sequelize.fn('COUNT', sequelize.col('Likes.postId')), 'likes'],
       ],
       where: { postId },
+      include: [
+        {
+          model: Users,
+          attributes: [],
+        },
+        {
+          model: Likes,
+          attributes: [],
+          require: false,
+        },
+      ],
+      group: ['Posts.postId'],
+      raw: true,
     });
     if (!post) {
       return res

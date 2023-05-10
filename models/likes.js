@@ -34,10 +34,18 @@ module.exports = (sequelize, DataTypes) => {
       postId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'Posts',
+          key: 'postId'
+        }
       },
       userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'Users',
+          key: 'userId',
+        }
       },
       createdAt: {
         allowNull: false,

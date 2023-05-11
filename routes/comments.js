@@ -14,8 +14,8 @@ router.get('/posts/:postId/comments', async (req, res) => {
   const comments = await Comments.findAll({
     attributes: [
       'commentId',
-      'postId',
       'userId',
+      [sequelize.col('nickname'), 'nickname'],
       'comment',
       'createdAt',
       'updatedAt',

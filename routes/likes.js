@@ -4,19 +4,6 @@ const { Op } = require('sequelize');
 const router = express.Router();
 const authMiddleware = require('../middlewares/auth-middleware');
 
-function parseLikePostsModel(likes) {
-  return likes.map((like) => {
-    let obj = {};
-
-    for (const [k, v] of Object.entries(like)) {
-      if (k.split('.').length > 1) {
-        const key = k.split('.')[1];
-        obj[key] = v;
-      } else obj[k] = v;
-    }
-    return obj;
-  });
-}
 // 11. 좋아요 게시글 조회 API
 //      @로그인 토큰을 검사하여, 유효한 토큰일 경우에만 좋아요 게시글 조회 가능
 //      @로그인 토큰에 해당하는 사용자가 좋아요 한 글에 한해서, 조회할 수 있게 하기
@@ -30,7 +17,7 @@ router.get('/posts/like', authMiddleware, async (req, res) => {
       attributes: [
         'postId',
         'userId',
-        [sequelize.fn('NICKNAME', sequelize.col('Users.')), 'nickname'],
+        [sequelize.col('nickname'), 'nickname'],
         'title',
         'createdAt',
         'updatedAt',
@@ -55,9 +42,9 @@ router.get('/posts/like', authMiddleware, async (req, res) => {
       raw: true,
     });
     return res.status(200).json({ posts });
-  } catch (error){
+  } catch (error) {
     // 예외케이스에서 처리하지 못한 에러
-    console.error(error)
+    console.error(error);
     return res
       .status(400)
       .json({ errorMessage: '좋아요 게시글 조회에 실패하였습니다.' });
@@ -96,7 +83,7 @@ router.put('/posts/:postId/like', authMiddleware, async (req, res) => {
         .status(200)
         .json({ message: '게시글의 좋아요를 등록하였습니다.' });
     } else {
-      await Likes.destroy({ postId: postId, userId: userId });
+      await Likes.destroy({ where: { postId: postId, userId: userId } });
       return res
         .status(200)
         .json({ message: '게시글의 좋아요를 취소하였습니다.' });

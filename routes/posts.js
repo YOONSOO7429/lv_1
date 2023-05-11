@@ -48,6 +48,7 @@ router.get('/posts', async (req, res) => {
       attributes: [
         'postId',
         'userId',
+        [sequelize.col('nickname'), 'nickname'],
         'title',
         'createdAt',
         'updatedAt',
@@ -92,6 +93,7 @@ router.get('/posts/:postId', async (req, res) => {
       attributes: [
         'postId',
         'userId',
+        [sequelize.col('nickname'), 'nickname'],
         'title',
         'content',
         'createdAt',

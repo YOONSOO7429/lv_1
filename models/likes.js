@@ -1,8 +1,6 @@
 'use strict';
 const { model } = require('mongoose');
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Likes extends Model {
     /**
@@ -20,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
         targetKey: 'postId',
         foreignKey: 'postId',
         onDelete: 'CASCADE',
-      })
+      });
     }
   }
   Likes.init(
@@ -36,8 +34,8 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         references: {
           model: 'Posts',
-          key: 'postId'
-        }
+          key: 'postId',
+        },
       },
       userId: {
         type: DataTypes.INTEGER,
@@ -45,21 +43,14 @@ module.exports = (sequelize, DataTypes) => {
         references: {
           model: 'Users',
           key: 'userId',
-        }
+        },
       },
-      createdAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-    }, {
-    sequelize,
-    modelName: 'Likes',
-  });
+    },
+    {
+      timestamps: false,
+      sequelize,
+      modelName: 'Likes',
+    },
+  );
   return Likes;
 };

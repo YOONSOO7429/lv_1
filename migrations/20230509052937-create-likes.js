@@ -10,7 +10,7 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       postId: {
         type: Sequelize.INTEGER,
@@ -30,19 +30,9 @@ module.exports = {
         },
         onDelete: 'cascade',
       },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
-      }
     });
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Likes');
-  }
+  },
 };
